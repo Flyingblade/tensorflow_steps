@@ -24,13 +24,15 @@ w2 = tf.Variable(tf.random_normal([3, 1], stddev=1, seed=1))
 x = tf.placeholder(tf.float32, shape=(None, 2), name='xinput')
 y_ = tf.placeholder(tf.float32, shape=(None, 1), name='yinput')
 a = tf.matmul(x, w1)
-y = tf.matmul(a, w2)
-y = tf.sigmoid(y)
+y1 = tf.matmul(a, w2)
 
+y = tf.sigmoid(y1)
 # loss func
-#
 cross_entropy = -tf.reduce_mean(
     y_ * tf.log(tf.clip_by_value(y, 1e-10, 1.0)) + (1 - y_) * tf.log(tf.clip_by_value(1 - y, 1e-10, 1.0)))
+# todo Attention: here can be replaced with below.
+# cross_entropy_sys = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=y_, logits=y1))
+
 # Opt
 train_step = tf.train.AdamOptimizer(learning_rate=lr).minimize(cross_entropy)
 
@@ -42,7 +44,6 @@ df_y = np.reshape([float(x[0] + x[1] < 1) for x in df_x], (-1, 1))
 # initialize
 global_initial = tf.global_variables_initializer()
 sess.run(global_initial)
-
 # start train
 rounds = 10000
 for i in range(rounds):
