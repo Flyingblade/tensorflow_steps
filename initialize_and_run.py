@@ -1,9 +1,14 @@
 """
+    A shallow linear network(without activation function) demo.
+    To be more familiar with TensorFlow basic apis.
+    Target function: x1 + x2 < 1
+
     Create by: FlyingBlade
     Create Time: 2018/6/6 16:25
 """
 import tensorflow as tf
 import numpy as np
+import math
 import os
 
 # config
@@ -30,6 +35,7 @@ y = tf.sigmoid(y1)
 # loss func
 cross_entropy = -tf.reduce_mean(
     y_ * tf.log(tf.clip_by_value(y, 1e-10, 1.0)) + (1 - y_) * tf.log(tf.clip_by_value(1 - y, 1e-10, 1.0)))
+
 # todo Attention: here can be replaced with below.
 # cross_entropy_sys = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=y_, logits=y1))
 
@@ -41,17 +47,25 @@ rdm = np.random.RandomState(1)
 dataset_size = 128
 df_x = rdm.rand(dataset_size, 2)
 df_y = np.reshape([float(x[0] + x[1] < 1) for x in df_x], (-1, 1))
+
 # initialize
 global_initial = tf.global_variables_initializer()
 sess.run(global_initial)
-# start train
-rounds = 10000
-for i in range(rounds):
-    # todo Attention: here needs "%dataset_size", if not, will only train 1 epoch.
-    start = (i * batch_size) % dataset_size
-    end = min(dataset_size, start + batch_size)
 
-    sess.run(train_step, feed_dict={x: df_x[start:end], y_: df_y[start:end]})
-    if i % 1000 == 0:
-        loss = sess.run(cross_entropy, feed_dict={x: df_x, y_: df_y})
-        print(i, loss)
+# start train
+epochs = 40
+for e in range(epochs):
+    # batch learing
+    for i in range(int(math.ceil(dataset_size / batch_size))):
+        # todo Attention: here needs "%dataset_size", if not, will only train 1 epoch.
+        start = (i * batch_size) % dataset_size
+        end = min(dataset_size, start + batch_size)
+        sess.run(train_step, feed_dict={x: df_x[start:end], y_: df_y[start:end]})
+    # print epoch loss
+    loss = sess.run(cross_entropy, feed_dict={x: df_x, y_: df_y})
+    print('epoch:', e, loss)
+    # todo Attention: shuffle, will get better performance
+    random_state = np.random.get_state()
+    np.random.shuffle(df_x)
+    np.random.set_state(random_state)
+    np.random.shuffle(df_y)
